@@ -12,30 +12,29 @@ public class DFSSolver : MonoBehaviour
     {
         var currentState = new GameState(
             123456789,
-            123456,
             123456789,
-            123456,
+            1234567,
+            123456789,
             0,
             0,
-            7,
-            987,
-            9,
-            8,
+            0,
+            0,
+            89,
+            0,
+            0,
+            0,
+            0,
+            0,
             0,
             0);
-        // currentState = GameState.NewStartState();
+        currentState = GameState.NewStartState();
         print(currentState);
         var nextMoves = currentState.nextPossibleMoves();
         var path = currentState.getPathToSolution();
-        print(nextMoves.Length);
-        foreach (var nextMove in nextMoves)
-        {
-            print(nextMove);
-        }
-        print(path.Length);
+        print("Path length: " + path.Length);
         foreach (var move in path)
         {
-            print(move);
+            print(move + "\n");
         }
     }
 
@@ -48,6 +47,8 @@ public class DFSSolver : MonoBehaviour
 
 class GameState : IEquatable<GameState>
 {
+    private int depthLimit;
+
     private int stack1;
     private int stack2;
     private int stack3;
@@ -60,6 +61,10 @@ class GameState : IEquatable<GameState>
     private int deck6;
     private int deck7;
     private int deck8;
+    private int pile1;
+    private int pile2;
+    private int pile3;
+    private int pile4;
 
     private static readonly System.Random rnd = new System.Random();
 
@@ -74,7 +79,11 @@ class GameState : IEquatable<GameState>
                      int deck5,
                      int deck6,
                      int deck7,
-                     int deck8)
+                     int deck8,
+                     int pile1,
+                     int pile2,
+                     int pile3,
+                     int pile4)
     {
         this.stack1 = stack1;
         this.stack2 = stack2;
@@ -88,10 +97,34 @@ class GameState : IEquatable<GameState>
         this.deck6 = deck6;
         this.deck7 = deck7;
         this.deck8 = deck8;
+        this.pile1 = pile1;
+        this.pile2 = pile2;
+        this.pile3 = pile3;
+        this.pile4 = pile4;
     }
 
     public GameState[] getPathToSolution()
     {
+        depthLimit = 50;
+        GameState[] path = Array.Empty<GameState>();
+        for (int i = 0; i < 4; i++)
+        {
+            path = getPathToSolutionPriv();
+
+            if (path.Length > 0)
+            {
+                return path;
+            }
+
+            depthLimit += 50;
+        }
+
+        return path;
+    }
+    private GameState[] getPathToSolutionPriv()
+    {
+        int depth = 1;
+
         List<GameState> path = new List<GameState>();
 
         if (this.IsVictoryState())
@@ -107,7 +140,7 @@ class GameState : IEquatable<GameState>
                 return path.ToArray();
             }
 
-            var states = nextState.getPathToSolutionRecursive();
+            var states = nextState.getPathToSolutionRecursive(depth + 1);
             if (states.Length > 0)
             {
                 path.AddRange(states);
@@ -119,9 +152,13 @@ class GameState : IEquatable<GameState>
         return path.ToArray();
     }
 
-    private GameState[] getPathToSolutionRecursive()
+    private GameState[] getPathToSolutionRecursive(int depth)
     {
         List<GameState> path = new List<GameState>();
+        if (depth > depthLimit)
+        {
+            return path.ToArray();
+        }
 
         foreach (var nextState in this.nextPossibleMoves())
         {
@@ -132,7 +169,7 @@ class GameState : IEquatable<GameState>
                 return path.ToArray();
             }
 
-            var states = nextState.getPathToSolutionRecursive();
+            var states = nextState.getPathToSolutionRecursive(depth + 1);
             if (states.Length > 0)
             {
                 path.AddRange(states);
@@ -157,7 +194,11 @@ class GameState : IEquatable<GameState>
                this.stack1 == 123456789 &&
                this.stack2 == 123456789 &&
                this.stack3 == 123456789 &&
-               this.stack4 == 123456789;
+               this.stack4 == 123456789 &&
+               this.pile1 == 0 &&
+               this.pile2 == 0 &&
+               this.pile3 == 0 &&
+               this.pile4 == 0;
     }
 
     public GameState[] nextPossibleMoves()
@@ -171,282 +212,991 @@ class GameState : IEquatable<GameState>
 
         /* Deck 1 */
         int topCard = deck1 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck1 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck1 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck1 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck1 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck1 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 2 */
         topCard = deck2 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck2 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck2 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck2 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck2 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck2 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 3 */
         topCard = deck3 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck3 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck3 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck3 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck3 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck3 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 4 */
         topCard = deck4 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck4 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck4 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck4 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck4 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck4 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 5 */
         topCard = deck5 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck5 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck5 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck5 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck5 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck5 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 6 */
         topCard = deck6 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck6 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck6 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck6 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck6 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck6 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 7 */
         topCard = deck7 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck7 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack2)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck7 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack3)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck7 /= 10;
-            states.Add(newState);
-        }
-        if (topCard == expectedCardStack4)
-        {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck7 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck7 /= 10;
+                states.Add(newState);
+            }
         }
 
         /* Deck 8 */
         topCard = deck8 % 10;
-        if (topCard == expectedCardStack1)
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack1 *= 10;
-            newState.stack1 += topCard;
-            newState.deck8 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile1 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile1 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile2 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile2 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile3 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile3 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
+
+            if (pile4 == 0)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.pile4 += topCard;
+                newState.deck8 /= 10;
+                states.Add(newState);
+            }
         }
-        if (topCard == expectedCardStack2)
+
+        /* Pile 1 */
+        topCard = pile1;
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack2 *= 10;
-            newState.stack2 += topCard;
-            newState.deck8 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck1 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck1 *= 10;
+                newState.deck1 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck2 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck2 *= 10;
+                newState.deck2 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck3 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck3 *= 10;
+                newState.deck3 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck4 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck4 *= 10;
+                newState.deck4 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck5 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck5 *= 10;
+                newState.deck5 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck6 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck6 *= 10;
+                newState.deck6 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck7 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck7 *= 10;
+                newState.deck7 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck8 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck8 *= 10;
+                newState.deck8 += topCard;
+                newState.pile1 -= topCard;
+                states.Add(newState);
+            }
         }
-        if (topCard == expectedCardStack3)
+        /* Pile 2 */
+        topCard = pile2;
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack3 *= 10;
-            newState.stack3 += topCard;
-            newState.deck8 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck1 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck1 *= 10;
+                newState.deck1 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck2 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck2 *= 10;
+                newState.deck2 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck3 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck3 *= 10;
+                newState.deck3 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck4 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck4 *= 10;
+                newState.deck4 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck5 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck5 *= 10;
+                newState.deck5 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck6 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck6 *= 10;
+                newState.deck6 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck7 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck7 *= 10;
+                newState.deck7 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck8 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck8 *= 10;
+                newState.deck8 += topCard;
+                newState.pile2 -= topCard;
+                states.Add(newState);
+            }
         }
-        if (topCard == expectedCardStack4)
+        /* Pile 3 */
+        topCard = pile3;
+        if (topCard != 0)
         {
-            var newState = this.MemberwiseClone() as GameState;
-            newState.stack4 *= 10;
-            newState.stack4 += topCard;
-            newState.deck8 /= 10;
-            states.Add(newState);
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck1 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck1 *= 10;
+                newState.deck1 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck2 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck2 *= 10;
+                newState.deck2 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck3 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck3 *= 10;
+                newState.deck3 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck4 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck4 *= 10;
+                newState.deck4 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck5 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck5 *= 10;
+                newState.deck5 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck6 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck6 *= 10;
+                newState.deck6 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck7 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck7 *= 10;
+                newState.deck7 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck8 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck8 *= 10;
+                newState.deck8 += topCard;
+                newState.pile3 -= topCard;
+                states.Add(newState);
+            }
+        }
+        /* Pile 4 */
+        topCard = pile4;
+        if (topCard != 0)
+        {
+            if (topCard == expectedCardStack1)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack1 *= 10;
+                newState.stack1 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack2)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack2 *= 10;
+                newState.stack2 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack3)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack3 *= 10;
+                newState.stack3 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == expectedCardStack4)
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.stack4 *= 10;
+                newState.stack4 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck1 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck1 *= 10;
+                newState.deck1 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck2 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck2 *= 10;
+                newState.deck2 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck3 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck3 *= 10;
+                newState.deck3 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck4 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck4 *= 10;
+                newState.deck4 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck5 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck5 *= 10;
+                newState.deck5 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck6 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck6 *= 10;
+                newState.deck6 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck7 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck7 *= 10;
+                newState.deck7 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
+            if (topCard == (deck8 + 1))
+            {
+                var newState = this.MemberwiseClone() as GameState;
+                newState.deck8 *= 10;
+                newState.deck8 += topCard;
+                newState.pile4 -= topCard;
+                states.Add(newState);
+            }
         }
 
         return states.ToArray();
@@ -476,7 +1226,8 @@ class GameState : IEquatable<GameState>
             Int32.Parse(string.Join("", shuffled.GetRange(20, 4))),
             Int32.Parse(string.Join("", shuffled.GetRange(24, 4))),
             Int32.Parse(string.Join("", shuffled.GetRange(28, 4))),
-            Int32.Parse(string.Join("", shuffled.GetRange(32, 4)))
+            Int32.Parse(string.Join("", shuffled.GetRange(32, 4))),
+            0, 0, 0, 0
             );
 
         return gameState;
@@ -511,7 +1262,11 @@ class GameState : IEquatable<GameState>
                deck5.Equals(other.deck5) &&
                deck6.Equals(other.deck6) &&
                deck7.Equals(other.deck7) &&
-               deck8.Equals(other.deck8);
+               deck8.Equals(other.deck8) &&
+               pile1.Equals(other.pile1) &&
+               pile2.Equals(other.pile2) &&
+               pile3.Equals(other.pile3) &&
+               pile4.Equals(other.pile4);
     }
 
     public override bool Equals(object obj)
@@ -521,6 +1276,6 @@ class GameState : IEquatable<GameState>
 
     public override string ToString()
     {
-        return $"Stacks: {stack1}|{stack2}|{stack3}|{stack4}\nDecks: {deck1}|{deck2}|{deck3}|{deck4}|{deck5}|{deck6}|{deck7}|{deck8}";
+        return $"Stacks: {stack1}|{stack2}|{stack3}|{stack4}\nDecks: {deck1}|{deck2}|{deck3}|{deck4}|{deck5}|{deck6}|{deck7}|{deck8}\nPiles: {pile1}|{pile2}|{pile3}|{pile4}";
     }
 }
