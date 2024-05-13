@@ -10,15 +10,32 @@ public class DFSSolver : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        var currentState = GameState.NewStartState();
+        var currentState = new GameState(
+            123456789,
+            123456,
+            123456789,
+            123456,
+            0,
+            0,
+            7,
+            987,
+            9,
+            8,
+            0,
+            0);
+        // currentState = GameState.NewStartState();
         print(currentState);
-
-        var nextStates = currentState.nextPossibleMoves();
-        print(nextStates.Length);
-
-        foreach (var nextState in nextStates)
+        var nextMoves = currentState.nextPossibleMoves();
+        var path = currentState.getPathToSolution();
+        print(nextMoves.Length);
+        foreach (var nextMove in nextMoves)
         {
-            print(nextState);
+            print(nextMove);
+        }
+        print(path.Length);
+        foreach (var move in path)
+        {
+            print(move);
         }
     }
 
@@ -44,7 +61,7 @@ class GameState : IEquatable<GameState>
     private int deck7;
     private int deck8;
 
-    private static System.Random rnd = new System.Random();
+    private static readonly System.Random rnd = new System.Random();
 
     public GameState(int stack1,
                      int stack2,
@@ -71,6 +88,76 @@ class GameState : IEquatable<GameState>
         this.deck6 = deck6;
         this.deck7 = deck7;
         this.deck8 = deck8;
+    }
+
+    public GameState[] getPathToSolution()
+    {
+        List<GameState> path = new List<GameState>();
+
+        if (this.IsVictoryState())
+        {
+            return path.ToArray();
+        }
+
+        foreach (var nextState in this.nextPossibleMoves())
+        {
+            if (nextState.IsVictoryState())
+            {
+                path.Add(nextState);
+                return path.ToArray();
+            }
+
+            var states = nextState.getPathToSolutionRecursive();
+            if (states.Length > 0)
+            {
+                path.AddRange(states);
+                break;
+            }
+        }
+
+        path.Reverse();
+        return path.ToArray();
+    }
+
+    private GameState[] getPathToSolutionRecursive()
+    {
+        List<GameState> path = new List<GameState>();
+
+        foreach (var nextState in this.nextPossibleMoves())
+        {
+            if (nextState.IsVictoryState())
+            {
+                path.Add(nextState);
+                path.Add(this);
+                return path.ToArray();
+            }
+
+            var states = nextState.getPathToSolutionRecursive();
+            if (states.Length > 0)
+            {
+                path.AddRange(states);
+                path.Add(this);
+                break;
+            }
+        }
+
+        return path.ToArray();
+    }
+
+    private bool IsVictoryState()
+    {
+        return this.deck1 == 0 &&
+               this.deck2 == 0 &&
+               this.deck3 == 0 &&
+               this.deck4 == 0 &&
+               this.deck5 == 0 &&
+               this.deck6 == 0 &&
+               this.deck7 == 0 &&
+               this.deck8 == 0 &&
+               this.stack1 == 123456789 &&
+               this.stack2 == 123456789 &&
+               this.stack3 == 123456789 &&
+               this.stack4 == 123456789;
     }
 
     public GameState[] nextPossibleMoves()
