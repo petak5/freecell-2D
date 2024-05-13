@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class DFSSolver : MonoBehaviour
@@ -18,6 +19,9 @@ public class DFSSolver : MonoBehaviour
         print(gameState2);
         print(gameState.Equals(gameState));
         print(gameState.Equals(gameState2));
+        print(GameState.NewStartState());
+        print(GameState.NewStartState());
+        print(GameState.NewStartState());
     }
 
     // Update is called once per frame
@@ -41,6 +45,8 @@ class GameState : IEquatable<GameState>
     private int deck6;
     private int deck7;
     private int deck8;
+
+    private static System.Random rnd = new System.Random();
 
     public GameState(int stack1,
                      int stack2,
@@ -67,6 +73,36 @@ class GameState : IEquatable<GameState>
         this.deck6 = deck6;
         this.deck7 = deck7;
         this.deck8 = deck8;
+    }
+
+    public static GameState NewStartState()
+    {
+        List<int> cards = new List<int>() {
+            1, 1, 1, 1,
+            2, 2, 2, 2,
+            3, 3, 3, 3,
+            4, 4, 4, 4,
+            5, 5, 5, 5,
+            6, 6, 6, 6,
+            7, 7, 7, 7,
+            8, 8, 8, 8,
+            9, 9, 9, 9
+        };
+        List<int> shuffled = cards.OrderBy(item => rnd.Next()).ToList();
+
+        GameState gameState = new GameState(
+            0, 0, 0, 0,
+            Int32.Parse(string.Join("", shuffled.GetRange(0, 5))),
+            Int32.Parse(string.Join("", shuffled.GetRange(5, 5))),
+            Int32.Parse(string.Join("", shuffled.GetRange(10, 5))),
+            Int32.Parse(string.Join("", shuffled.GetRange(15, 5))),
+            Int32.Parse(string.Join("", shuffled.GetRange(20, 4))),
+            Int32.Parse(string.Join("", shuffled.GetRange(24, 4))),
+            Int32.Parse(string.Join("", shuffled.GetRange(28, 4))),
+            Int32.Parse(string.Join("", shuffled.GetRange(32, 4)))
+            );
+
+        return gameState;
     }
 
     public static bool operator ==(GameState state1, GameState state2)
